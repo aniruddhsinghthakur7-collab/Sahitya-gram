@@ -1,0 +1,11 @@
+{
+  "name": "साहित्य ग्राम",
+  "short_name": "साहित्य ग्राम",
+  "description": "पढ़ने, लिखने और साहित्य से जुड़ने का स्वतंत्र मंच।",
+  "lang": "hi-IN",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f8f3e6",
+  "theme_color": "#5c1c23",
+  "icons": []
+}
