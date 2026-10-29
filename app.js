@@ -132,6 +132,34 @@ function renderLibrary(){
   document.getElementById("libraryList").innerHTML=list.length?list.map(storyCard).join():'<div class="empty-state"><span class="empty-flower">✿</span><h3>आपका पुस्तकालय खाली है</h3><p>किसी रचना को खोलकर बुकमार्क करें। वह यहाँ दिखाई देगी।</p></div>';
   bindReadButtons();
 }
+async function loadCloudProfile() {
+  if (!supabaseClient) return;
+
+  const { data: { user }, error: userError } =
+    await supabaseClient.auth.getUser();
+
+  if (userError || !user) return;
+
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("display_name, avatar_url, bio")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("प्रोफ़ाइल लोड नहीं हुई:", error.message);
+    return;
+  }
+
+  if (data) {
+    state.profile.name =
+      data.display_name || "अनाम पाठक";
+    state.profile.avatarUrl = data.avatar_url || "";
+    state.profile.intro = data.bio || "";
+    saveState();
+    renderProfile();
+  }
+}
 function renderProfile(){
   const p=state.profile;
   document.getElementById("profileAvatar").textContent=(p.name||"अ").trim().slice(0,1);
