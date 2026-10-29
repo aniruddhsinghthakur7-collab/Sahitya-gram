@@ -287,10 +287,15 @@ init();
           email,
           password
         });
-      } else {
+              } else {
         result = await supabaseClient.auth.signUp({
           email,
-          password
+          password,
+          options: {
+            data: {
+              display_name: "अनाम पाठक"
+            }
+          }
         });
       }
 
