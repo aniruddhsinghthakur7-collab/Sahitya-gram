@@ -86,8 +86,164 @@ function restoreDraft(){
 function openWrite(){
   restoreDraft();document.getElementById("writeDialog").showModal();
 }
-function publishStory(e){
+
+async function publishStory(e) {
   e.preventDefault();
+
+  const title = document.getElementById("storyTitle").value.trim();
+  const body = document.getElementById("storyBody").value.trim();
+  const type = document.getElementById("formType").value;
+  const subtype = document.getElementById("formSubType").value;
+  const categoryNames = [
+    ...document.querySelectorAll("#formCategories input:checked")
+  ].map(x => x.value);
+
+  if (!title || !body || !type || !categoryNames.length) {
+    toast("शीर्षक, सामग्री, विधा और कम-से-कम एक श्रेणी भरें।");
+    return;
+  }
+
+  if (type !== "चंपू काव्य" && !subtype) {
+    toast("कृपया रचना का उपप्रकार चुनें।");
+    return;
+  }
+
+  if (!supabaseClient) {
+    toast("Supabase कनेक्शन उपलब्ध नहीं है।");
+    return;
+  }
+
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  const user = authData?.user;
+
+  if (authError || !user) {
+    toast("रचना प्रकाशित करने के लिए पहले लॉगिन करें।");
+    return;
+  }
+
+  let work = null;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("works")
+      .insert({
+        author_id: user.id,
+        title,
+        content: body,
+        work_type: type,
+        main_form: type,
+        subtype: subtype || null,
+        status: "published",
+        content_language: "hi"
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    work = data;
+
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("display_name, username")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const { data: categoryRows, error: categoryError } =
+      await supabaseClient
+        .from("categories")
+        .select("*");
+
+    if (categoryError) throw categoryError;
+
+    const links = [];
+
+    for (const name of categoryNames) {
+      const row = (categoryRows || []).find(item =>
+        Object.values(item).some(value =>
+          typeof value === "string" &&
+          value.trim() === name
+        )
+      );
+
+      if (!row) {
+        throw new Error(
+          `श्रेणी "${name}" डेटाबेस में नहीं मिली।`
+        );
+      }
+
+      const categoryId = row.id ?? row.category_id;
+
+      if (categoryId == null) {
+        throw new Error(
+          `श्रेणी "${name}" की ID नहीं मिली।`
+        );
+      }
+
+      links.push({
+        work_id: work.id,
+        category_id: categoryId
+      });
+    }
+
+    const { error: linkError } = await supabaseClient
+      .from("work_categories")
+      .insert(links);
+
+    if (linkError) throw linkError;
+
+    const story = {
+      id: work.id,
+      title: work.title,
+      body: work.content,
+      type: work.work_type,
+      subtype: work.subtype || "",
+      categories: categoryNames,
+      author:
+        profile?.display_name ||
+        profile?.username ||
+        user.email ||
+        "अनाम लेखक",
+      created: new Date(work.created_at).getTime(),
+      reads: 0,
+      minutes: minutesFor(work.content)
+    };
+
+    state.stories = [
+      story,
+      ...state.stories.filter(s => s.id !== story.id)
+    ];
+
+    state.drafts = {
+      title: "",
+      body: "",
+      type: "",
+      subtype: "",
+      categories: []
+    };
+
+    saveState();
+    document.getElementById("writeDialog").close();
+    renderStories();
+    renderProfile();
+
+    toast("रचना क्लाउड पर प्रकाशित हो गई!");
+
+  } catch (error) {
+    console.error("रचना प्रकाशित करने में समस्या:", error);
+
+    if (work) {
+      toast(
+        "रचना सेव हो गई, लेकिन श्रेणी या अन्य जानकारी जोड़ने में समस्या आई: " +
+        error.message
+      );
+    } else {
+      toast("रचना प्रकाशित नहीं हुई: " + error.message);
+    }
+  }
+}
+
   const title=document.getElementById("storyTitle").value.trim();
   const body=document.getElementById("storyBody").value.trim();
   const type=document.getElementById("formType").value;
