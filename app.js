@@ -183,3 +183,136 @@ function init(){
 }
 function toggleTheme(){state.theme=state.theme==="dark"?"light":"dark";saveState();applyTheme();}
 init();
+/* साहित्य-ग्राम: Supabase लॉगिन */
+
+(function setupSahityaGramAuth() {
+  const dialog = document.getElementById("authDialog");
+  const form = document.getElementById("authForm");
+
+  if (!dialog || !form || !window.supabase) {
+    console.error("लॉगिन फ़ॉर्म या Supabase उपलब्ध नहीं है।");
+    return;
+  }
+
+  const emailInput = document.getElementById("authEmail");
+  const passwordInput = document.getElementById("authPassword");
+  const message = document.getElementById("authMessage");
+  const submit = document.getElementById("authSubmit");
+  const register = document.getElementById("authRegister");
+  const close = document.getElementById("authClose");
+
+  let mode = "login";
+
+  const loginButton = document.createElement("button");
+  loginButton.type = "button";
+  loginButton.id = "openAuthButton";
+  loginButton.textContent = "लॉगिन / खाता";
+  loginButton.style.cssText =
+    "position:fixed;right:16px;bottom:18px;z-index:9999;padding:12px 18px;border-radius:24px;background:#6d3f87;color:white;border:0;box-shadow:0 2px 8px #777;";
+
+  document.body.appendChild(loginButton);
+
+  function showMessage(text) {
+    message.textContent = text;
+  }
+
+  function setMode(nextMode) {
+    mode = nextMode;
+    showMessage("");
+    document.getElementById("authHeading").textContent =
+      mode === "login" ? "साहित्य-ग्राम में प्रवेश" : "नया खाता बनाएँ";
+    submit.textContent =
+      mode === "login" ? "लॉगिन करें" : "रजिस्टर करें";
+    register.textContent =
+      mode === "login" ? "नया खाता बनाएँ" : "पहले से खाता है? लॉगिन करें";
+    passwordInput.autocomplete =
+      mode === "login" ? "current-password" : "new-password";
+  }
+
+  async function refreshAuth() {
+    const { data, error } = await supabaseClient.auth.getUser();
+
+    if (error) console.error("खाता जाँच:", error.message);
+
+    if (data.user) {
+      loginButton.textContent = "लॉगआउट";
+      loginButton.title = data.user.email || "लॉगिन है";
+    } else {
+      loginButton.textContent = "लॉगिन / खाता";
+      loginButton.title = "";
+    }
+
+    return data.user;
+  }
+
+  loginButton.addEventListener("click", async () => {
+    const user = await refreshAuth();
+
+    if (user) {
+      if (confirm("क्या लॉगआउट करना चाहते हो?")) {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+          showMessage("लॉगआउट नहीं हुआ: " + error.message);
+          dialog.showModal();
+        } else {
+          alert("लॉगआउट हो गया।");
+          await refreshAuth();
+        }
+      }
+    } else {
+      setMode("login");
+      dialog.showModal();
+    }
+  });
+
+  register.addEventListener("click", () => {
+    setMode(mode === "login" ? "register" : "login");
+  });
+
+  close.addEventListener("click", () => dialog.close());
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showMessage("कृपया प्रतीक्षा करें…");
+    submit.disabled = true;
+
+    try {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      let result;
+
+      if (mode === "login") {
+        result = await supabaseClient.auth.signInWithPassword({
+          email,
+          password
+        });
+      } else {
+        result = await supabaseClient.auth.signUp({
+          email,
+          password
+        });
+      }
+
+      if (result.error) {
+        showMessage("समस्या: " + result.error.message);
+      } else if (mode === "register" && !result.data.session) {
+        showMessage("खाता बनाने का अनुरोध सफल हुआ। यदि ईमेल सत्यापन माँगा जाए, तो अपने ईमेल में आए निर्देश पूरे करें।");
+      } else {
+        showMessage("लॉगिन सफल हुआ!");
+        await refreshAuth();
+        setTimeout(() => dialog.close(), 1000);
+      }
+    } catch (error) {
+      showMessage("त्रुटि: " + error.message);
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  supabaseClient.auth.onAuthStateChange(() => {
+    refreshAuth();
+  });
+
+  refreshAuth();
+})();
