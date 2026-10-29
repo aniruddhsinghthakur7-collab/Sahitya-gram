@@ -243,18 +243,6 @@ async function publishStory(e) {
     }
   }
 }
-
-  const title=document.getElementById("storyTitle").value.trim();
-  const body=document.getElementById("storyBody").value.trim();
-  const type=document.getElementById("formType").value;
-  const subtype=document.getElementById("formSubType").value;
-  const categories=[...document.querySelectorAll("#formCategories input:checked")].map(x=>x.value);
-  if(!title||!body||!type||categories.length<1){toast("शीर्षक, रचना का रूप, सामग्री और कम-से-कम एक श्रेणी भरें।");return;}
-  if(type!=="चंपू काव्य"&&!subtype){toast("कृपया रचना का उपप्रकार चुनें।");return;}
-  const story={id:"story-"+Date.now(),title,body,type,subtype,categories,author:state.profile.name||"अनाम लेखक",created:Date.now(),reads:0,minutes:minutesFor(body)};
-  state.stories.unshift(story);state.drafts={title:"",body:"",type:"",subtype:"",categories:[]};saveState();
-  document.getElementById("writeDialog").close();renderStories();renderProfile();toast("रचना इस डिवाइस पर प्रकाशित हो गई।");
-}
 function openReader(id){
   const s=state.stories.find(x=>x.id===id);if(!s)return;
   currentReaderId=id;readingStartedAt=Date.now();
