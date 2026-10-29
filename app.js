@@ -3,27 +3,6 @@ const supabaseClient = window.supabase?.createClient(
   window.SUPABASE_URL,
   window.SUPABASE_ANON_KEY
 );
-
-if (!supabaseClient) {
-  console.error(
-    "Supabase कनेक्शन नहीं बना। URL, publishable key और स्क्रिप्ट जाँचें।"
-  );
-}
-
-const supabaseClient = window.supabase?.createClient(
-  window.SUPABASE_URL,
-  window.SUPABASE_ANON_KEY
-);
-
-if (!supabaseClient) {
-  console.error(
-    "Supabase कनेक्शन नहीं बना। URL, publishable key और स्क्रिप्ट जाँचें।"
-  );
-}
-const supabaseClient = window.supabase?.createClient(
-  window.SUPABASE_URL,
-  window.SUPABASE_ANON_KEY
-);
 const CATEGORIES = ["रोमांटिक","कॉमेडी","हास्य-व्यंग्य","प्रेम","सस्पेंस एवं थ्रिलर","एडवेंचर","साइंस फिक्शन","फैंटेसी","देशप्रेम","शौर्य","ओज","ऐतिहासिक","पौराणिक","मिश्रित","रेखाचित्र","बालकथा","मनोरंजन","शिक्षाप्रद","अन्य"];
 const SUBTYPES = {
   "गद्य":["कहानी","लघुकथा","उपन्यास","लेख","निबंध","नाटक","संस्मरण","यात्रा वृत्तांत","आत्मकथा","हास्य-व्यंग्य","जीवनी"],
