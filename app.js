@@ -331,10 +331,11 @@ init();
         showMessage("समस्या: " + result.error.message);
       } else if (mode === "register" && !result.data.session) {
         showMessage("खाता बनाने का अनुरोध सफल हुआ। यदि ईमेल सत्यापन माँगा जाए, तो अपने ईमेल में आए निर्देश पूरे करें।");
-      } else {
-        showMessage("लॉगिन सफल हुआ!");
-        await refreshAuth();
-        setTimeout(() => dialog.close(), 1000);
+    } else {
+  showMessage("लॉगिन सफल हुआ!");
+  await refreshAuth();
+  await loadCloudProfile();
+  setTimeout(() => dialog.close(), 1000);
       }
     } catch (error) {
       showMessage("त्रुटि: " + error.message);
