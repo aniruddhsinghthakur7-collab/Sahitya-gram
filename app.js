@@ -203,7 +203,39 @@ function init(){
   document.getElementById("bookmarkButton").addEventListener("click",toggleBookmark);
   document.getElementById("clearCategory").addEventListener("click",()=>{activeCategory="सभी";renderChips();renderStories();});
   document.getElementById("introInput").addEventListener("input",e=>document.getElementById("introCount").textContent=`${e.target.value.length}/1000 अक्षर`);
-  document.getElementById("saveProfile").addEventListener("click",()=>{state.profile.intro=document.getElementById("introInput").value.slice(0,1000);saveState();toast("परिचय सुरक्षित हो गया।");});
+  
+document.getElementById("saveProfile").addEventListener("click", async () => {
+  const intro = document.getElementById("introInput").value.slice(0, 1000);
+
+  if (!supabaseClient) {
+    toast("डेटाबेस से कनेक्शन उपलब्ध नहीं है।");
+    return;
+  }
+
+  const { data: { user }, error: userError } =
+    await supabaseClient.auth.getUser();
+
+  if (userError || !user) {
+    toast("पहले लॉगिन करें।");
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("profiles")
+    .update({ bio: intro })
+    .eq("id", user.id);
+
+  if (error) {
+    toast("परिचय सुरक्षित नहीं हुआ: " + error.message);
+    return;
+  }
+
+  state.profile.intro = intro;
+  saveState();
+  renderProfile();
+  toast("परिचय डेटाबेस में सुरक्षित हो गया।");
+});
+  
   document.getElementById("editProfile").addEventListener("click",()=>{const name=prompt("अपना प्रदर्शित नाम लिखें:",state.profile.name||"अनाम पाठक");if(name&&name.trim()){state.profile.name=name.trim().slice(0,60);saveState();renderProfile();toast("नाम अपडेट हो गया।");}});
   document.getElementById("resetData").addEventListener("click",()=>{if(confirm("क्या स्थानीय डेमो डेटा मिटाकर शुरुआत करें?")){localStorage.removeItem(STORAGE);state=loadState();init();switchTab("home");toast("डेमो रीसेट हो गया।");}});
   document.getElementById("writeDialog").addEventListener("close",saveDraftFromForm);
