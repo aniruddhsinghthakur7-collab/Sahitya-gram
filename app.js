@@ -474,6 +474,26 @@ init();
     setMode(mode === "login" ? "register" : "login");
   });
 
+google.addEventListener("click", async () => {
+  if (!supabaseClient) {
+    message.textContent = "Supabase कनेक्शन उपलब्ध नहीं है।";
+    return;
+  }
+
+  message.textContent = "Google लॉगिन खोला जा रहा है...";
+
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin + window.location.pathname
+    }
+  });
+
+  if (error) {
+    message.textContent = "Google लॉगिन त्रुटि: " + error.message;
+  }
+});
+  
   close.addEventListener("click", () => dialog.close());
 
   form.addEventListener("submit", async (event) => {
