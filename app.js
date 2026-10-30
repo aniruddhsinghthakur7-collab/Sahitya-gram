@@ -403,6 +403,7 @@ init();
   const message = document.getElementById("authMessage");
   const submit = document.getElementById("authSubmit");
   const register = document.getElementById("authRegister");
+  const google = document.getElementById("authGoogle");
   const close = document.getElementById("authClose");
 
   let mode = "login";
